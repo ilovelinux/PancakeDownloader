@@ -51,7 +51,7 @@ func main() {
 		}
 		f(doc)
 		for i := 0; i < len(urlArray); i++ {
-			fmt.Printf("Downloading %d of %d: %s\n", i, len(urlArray), urlArray[i])
+			fmt.Printf("Downloading %d of %d: %s\n", i+1, len(urlArray), urlArray[i])
 			downloadFile(urlArray[i], dirName)
 		}
 	}
