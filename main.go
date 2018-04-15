@@ -14,13 +14,13 @@ import (
 )
 
 func main() {
-	if (len(os.Args) == 1) {
+	if len(os.Args) == 1 {
 		fmt.Printf("Usage: ./main <URL>")
 		os.Exit(1)
 	}
 	var threadURL string
 	resp, err := http.Get(os.Args[1])
-	urlArray := make([]string, 1)
+	var urlArray []string
 	s, _ := ioutil.ReadAll(resp.Body)
 	doc, err := html.Parse(strings.NewReader(string(s)))
 
@@ -37,12 +37,10 @@ func main() {
 		f = func(n *html.Node) {
 			if n.Type == html.ElementNode && n.Data == "a" {
 				for _, a := range n.Attr {
-					if a.Key == "class" {
+					if a.Key == "class" && a.Val == "fileThumb" {
 						for _, y := range n.Attr {
 							if y.Key == "href" {
-								if strings.Contains(y.Val, "i.4cdn.org") {
-									urlArray = append(urlArray, strings.Replace(y.Val, "//", "http://", 1))
-								}
+								urlArray = append(urlArray, strings.Replace(y.Val, "//", "http://", 1))
 							}
 						}
 					}
@@ -53,7 +51,7 @@ func main() {
 			}
 		}
 		f(doc)
-		for i := 1; i < len(urlArray); i++ {
+		for i := 0; i < len(urlArray); i++ {
 			fmt.Println(urlArray[i])
 			downloadFile(urlArray[i], DirName)
 		}
