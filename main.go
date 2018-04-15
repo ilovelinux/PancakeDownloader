@@ -31,7 +31,7 @@ func main() {
 		fmt.Println(err.Error())
 	}
 	if resp.StatusCode == 200 {
-		makeDir(DirName)
+		os.Mkdir(DirName, os.FileMode(0777))
 
 		var f func(*html.Node)
 		f = func(n *html.Node) {
@@ -58,10 +58,6 @@ func main() {
 			downloadFile(urlArray[i], DirName)
 		}
 	}
-}
-
-func makeDir(s string) {
-	os.Mkdir(s, os.FileMode(0777))
 }
 
 func downloadFile(picURL string, dir string) {
