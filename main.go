@@ -14,6 +14,10 @@ import (
 )
 
 func main() {
+	if (len(os.Args) == 1) {
+		fmt.Printf("Usage: ./main <URL>")
+		os.Exit(1)
+	}
 	var threadURL string
 	resp, err := http.Get(os.Args[1])
 	urlArray := make([]string, 1)
