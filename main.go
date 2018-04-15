@@ -5,7 +5,6 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"net/url"
 	"os"
 	"path"
 	"strings"
@@ -18,20 +17,20 @@ func main() {
 		fmt.Printf("Usage: ./main <URL>")
 		os.Exit(1)
 	}
-	var threadURL string
 	resp, err := http.Get(os.Args[1])
 	var urlArray []string
 	s, _ := ioutil.ReadAll(resp.Body)
 	doc, err := html.Parse(strings.NewReader(string(s)))
 
-	threadURL = os.Args[1]
-	DirName := path.Base(threadURL)
+	dirName := path.Base(resp.Request.URL.Path)
 
 	if err != nil {
 		fmt.Println(err.Error())
 	}
 	if resp.StatusCode == 200 {
-		os.Mkdir(DirName, os.FileMode(0777))
+		if _, err := os.Stat(dirName); os.IsNotExist(err) {
+			os.Mkdir(dirName, os.FileMode(0777))
+		}
 
 		var f func(*html.Node)
 		f = func(n *html.Node) {
@@ -52,22 +51,18 @@ func main() {
 		}
 		f(doc)
 		for i := 0; i < len(urlArray); i++ {
-			fmt.Println(urlArray[i])
-			downloadFile(urlArray[i], DirName)
+			fmt.Printf("Downloading %d of %d: %s\n", i, len(urlArray), urlArray[i])
+			downloadFile(urlArray[i], dirName)
 		}
 	}
 }
 
 func downloadFile(picURL string, dir string) {
-	fileURL, err := url.Parse(picURL)
-
-	if err != nil {
-		fmt.Println(err.Error())
+	fileName := path.Base(picURL)
+	if _, err := os.Stat(fmt.Sprintf("%s/%s", dir, fileName)); err == nil {
+		fmt.Println("File already downloaded, skipping...")
+		return
 	}
-
-	path := fileURL.Path
-	segments := strings.Split(path, "/")
-	fileName := segments[2]
 	file, err := os.Create(fmt.Sprintf("%s/%s", dir, fileName))
 
 	if err != nil {
@@ -75,20 +70,12 @@ func downloadFile(picURL string, dir string) {
 	}
 	defer file.Close()
 
-	check := http.Client{
-		CheckRedirect: func(r *http.Request, via []*http.Request) error {
-			r.URL.Opaque = r.URL.Path
-			return nil
-		},
-	}
-
-	resp, err := check.Get(picURL)
+	resp, err := http.Get(picURL)
 
 	if err != nil {
 		fmt.Println(err.Error())
 	}
 	defer resp.Body.Close()
-	//fmt.Println(resp.Status)
 
 	size, err := io.Copy(file, resp.Body)
 
